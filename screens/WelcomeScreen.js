@@ -189,7 +189,6 @@ showModal = ()=>{
             this.showModal()
           }
         <View style={{justifyContent:'center', alignItems:'center'}}>
-          <SantaAnimation/>
           <Text style={styles.title}>Book Santa</Text>
         </View>
         <View>

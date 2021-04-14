@@ -12,7 +12,8 @@ export default class MyDonationScreen extends Component {
      super()
      this.state = {
        userId : firebase.auth().currentUser.email,
-       allDonations : []
+       allDonations : [],
+       donor_name:''
      }
      this.requestRef= null
    }
@@ -28,6 +29,46 @@ export default class MyDonationScreen extends Component {
      })
    }
 
+   sendBook=async(bookDetails)=>{
+     if(bookDetails.request_status === "bookSent"){
+      var request_status = "donor interested"
+      db.collection("all_donations")
+      .doc(bookDetails.doc_id).update({
+        request_status:"donor interested"
+      })
+      this.sendNotification(bookDetails, request_status)
+     }else{
+       var request_status = "bookSent"
+       db.collection("all_donations")
+       .doc(bookDetails.doc_id).update({
+         request_status:"bookSent"
+       })
+       this.sendNotification(bookDetails, request_status)
+     }
+   }
+
+   sendNotification=async(bookDetails, request_status)=>{
+     var request_id = bookDetails.request_id;
+     var donor_id = bookDetails.donor_id;
+     db.collection("notifications").where("request_id", "==", request_id).where("donor_id", "==", donor_id)
+     .get()
+     .then(snapshot=>{
+       snapshot.forEach(doc=>{
+         var message = '';
+         if(request_status === "bookSent"){
+           message = this.state.donor_name + " sent you book"
+         }else{
+           message = this.state.donor_name + " has shown interest in donating the book"
+         }
+         db.collection("notifications").doc(doc.id).update({
+           message:message,
+           nottification_status:"unread",
+           date:firebase.firestore.FieldValue.serverTimestamp()
+         })
+       })
+     })
+   }
+
    keyExtractor = (item, index) => index.toString()
 
    renderItem = ( {item, i} ) =>(
@@ -38,7 +79,7 @@ export default class MyDonationScreen extends Component {
        leftElement={<Icon name="book" type="font-awesome" color ='#696969'/>}
        titleStyle={{ color: 'black', fontWeight: 'bold' }}
        rightElement={
-           <TouchableOpacity style={styles.button}>
+           <TouchableOpacity style={styles.button} onPress={()=>{this.sendBook(item)}}>
              <Text style={{color:'#ffff'}}>Send Book</Text>
            </TouchableOpacity>
          }
